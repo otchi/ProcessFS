@@ -18,19 +18,21 @@ import java.util.List;
 
 public class FSProcess extends Thread {
 	
-	
+	// directory to listen
 	private File directory;
+	
 	private HashMap<String, FSProcess> childDirectoryProcesses=new HashMap<String, FSProcess>();
+	// all process listener in application rebroadcast
 	private static Hashtable<String, FSProcess> allProcess=new Hashtable<String, FSProcess>();
-	private static Hashtable<String, FSMove> globalEvent=new Hashtable<String, FSMove>();
+	// event of moving directory or files
+	private static Hashtable<String, FSMove> globalMoveEvent=new Hashtable<String, FSMove>();
+	// event inside directory sup/modifie/creating
 	private ArrayList<FSEvent> localEvent=new ArrayList<FSEvent>();
+	// event who have a delete event and attending to other directory that not GlobalMoveEvent
 	private static Collection<ListenNotifyProcess> toNotify=Collections.synchronizedCollection(new ArrayList<FSProcess.ListenNotifyProcess>());
 
 
-	
 
-	
-	
 	 private FSProcess(File directory) {
 		super();
 		this.directory = directory;
@@ -44,7 +46,7 @@ public class FSProcess extends Thread {
 		return processFS;
 	 }
 	 
-	 
+	 // recursive construction
 	 private static void recursiveProcess(FSProcess processFS){
 		
 		processFS.start();
@@ -52,17 +54,22 @@ public class FSProcess extends Thread {
 		
 		 File[] files=processFS.directory.listFiles();
 		 for(File file:files){
+			 
 			 if(file.isDirectory()){
+				 
 				 FSProcess process_FS =new FSProcess(file);
 				 processFS.childDirectoryProcesses
 				 	.put(file.getPath(), process_FS);
 				 allProcess
 				 	.put(file.getAbsolutePath(), process_FS);
-				recursiveProcess(process_FS);}
+				recursiveProcess(process_FS);
+				
+			 }
 			 
 		 } 
 	 }
 	 
+	 // reun the thread to listening event
 	@Override 
 	public void run() {	 
 		Path myDir = Paths.get(this.directory.getAbsolutePath()); 
@@ -162,6 +169,7 @@ public class FSProcess extends Thread {
 				if(!this.isMove);
 					this.parentProcess.localEvent
 							.add(new FSEvent(StandardWatchEventKinds.ENTRY_CREATE,localPath));
+					
 					
 				this.interrupt();
 			} catch (InterruptedException e) {
